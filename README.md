@@ -9,3 +9,8 @@ Pytorch functional form. That way you don't have to call a module for it.
 logits.permute
 
 
+Automated training:
+
+Train it on math problems.
+
+
