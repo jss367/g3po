@@ -90,13 +90,14 @@ class MultiHeadAttention(nn.Module):
         # Going to need a final linear layer right before softmax (see figure 1 of AIAYN)
         self.final_linear = nn.Linear(self.input_dimensions, self.vocab_size)
 
-    def forward(self, x, mask=None, labels=None):
+    def forward(self, x, mask=None):
         """
         The input here can be batch_size, sequence_length.
         I'll take that can put it through the embeddings and that will add the input dimensions
 
 
         The input to this model should be a tensor of shape (batch_size, sequence_length, input_dimensions)
+        
         """
         batch_size, sequence_length = x.shape
         # start by embedding the input
@@ -142,14 +143,6 @@ class MultiHeadAttention(nn.Module):
         # Finally, we apply a linear transformation to reduce the dimension back to d_model
         outputs = self.feed_forward(outputs)  # B, S, input_dimensions
 
-        assert labels.shape == (B, S)
-
-        if labels == None:
-            loss = None
-
-        else:
-            labels = labels.long()
-            loss_func = nn.CrossEntropyLoss()
-            loss = loss_func(outputs.view(-1, self.vocab_size), labels.view(-1))
-
-        return outputs, loss
+        outputs = self.final_linear(outputs)  # B, S, vocab_size
+        
+        return outputs
