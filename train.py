@@ -23,6 +23,6 @@ mha = MultiHeadAttention(input_dimensions, num_heads, vocab_size)
 
 mask = create_mask(sequence_length)  # not convinced this is the right place to create the mask
 
-mha.forward(batch_x, mask=mask)
+mha.forward(batch_x, mask=mask, labels=batch_y)
 
 # now let's get the loss

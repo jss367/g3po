@@ -10,8 +10,7 @@ I was doing it all in a MultiHeadedAttention class, but I will make a single sel
 """
 import numpy as np
 import torch
-from pyxtend import struct
-from torch import einsum, nn
+from torch import nn
 from transformers import BertTokenizerFast
 
 # ------------hyperparameters---------------- some are in multiple files while I move things around
@@ -40,7 +39,7 @@ def scaled_dot_product_attention(query, key, value, mask=None):
 
     # add the mask here
     if mask is not None:
-        scaled_attention_logits += mask * float("-inf")
+        scaled_attention_logits += mask * -1e9
 
     # softmax = nn.Softmax(dim=-1)(scaled_attention_logits) # Am I going to need to use this to track the gradients?
     attention_weights = torch.nn.functional.softmax(
@@ -75,7 +74,7 @@ class MultiHeadAttention(nn.Module):
         self.input_dimensions = input_dimensions  # this is also known as d_model
         self.num_heads = num_heads
         self.dimensions_per_head = int(input_dimensions / num_heads)  # this is also known as d_k
-
+        self.vocab_size = vocab_size
         self.embeddings = nn.Embedding(
             vocab_size, input_dimensions
         )  # karpathy has vocab_size, vocab_size -- double check at some point
@@ -86,9 +85,12 @@ class MultiHeadAttention(nn.Module):
         self.keys = nn.Linear(self.input_dimensions, self.input_dimensions, bias=False)  # Karparthy says no bias
         self.queries = nn.Linear(self.input_dimensions, self.input_dimensions, bias=False)
 
-        # self.feed_forward = nn.Linear(self.input_dimensions, self.input_dimensions) # this can happen later
+        self.feed_forward = nn.Linear(self.input_dimensions, self.input_dimensions)  # this can happen later
+        
+        # Going to need a final linear layer right before softmax (see figure 1 of AIAYN)
+        self.final_linear = nn.Linear(self.input_dimensions, self.vocab_size)
 
-    def forward(self, x, mask=None):
+    def forward(self, x, mask=None, labels=None):
         """
         The input here can be batch_size, sequence_length.
         I'll take that can put it through the embeddings and that will add the input dimensions
@@ -111,7 +113,7 @@ class MultiHeadAttention(nn.Module):
         values = values.reshape(batch_size, num_heads, sequence_length, self.dimensions_per_head)
 
         # now apply the attention
-        attention = scaled_dot_product_attention(queries, keys, values, mask=mask)
+        attention_logits = scaled_dot_product_attention(queries, keys, values, mask=mask)
         # more steps to do here
 
         # add residual connection
@@ -128,3 +130,26 @@ class MultiHeadAttention(nn.Module):
 
         # layer norm
         # x = nn.LayerNorm(x)
+
+        B, H, S, C = attention_logits.shape
+
+        # First, we reshape to [B, S, H, C]
+        outputs = attention_logits.transpose(1, 2).contiguous()  # view operates on contiguous tensors
+
+        # Then, we combine all heads into a single vector for each position
+        outputs = outputs.view(B, S, H * C)  # B, S, H*C
+
+        # Finally, we apply a linear transformation to reduce the dimension back to d_model
+        outputs = self.feed_forward(outputs)  # B, S, input_dimensions
+
+        assert labels.shape == (B, S)
+
+        if labels == None:
+            loss = None
+
+        else:
+            labels = labels.long()
+            loss_func = nn.CrossEntropyLoss()
+            loss = loss_func(outputs.view(-1, self.vocab_size), labels.view(-1))
+
+        return outputs, loss
