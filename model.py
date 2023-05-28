@@ -14,6 +14,13 @@ from pyxtend import struct
 from torch import einsum, nn
 from transformers import BertTokenizerFast
 
+# ------------hyperparameters---------------- some are in multiple files while I move things around
+batch_size = 32  # this is for getting started
+input_dimensions = 256
+sequence_length = 128
+num_heads = 8  # original paper used 8
+# ------------hyperparameters----------------
+
 
 class GPT(nn.Module):
     pass
@@ -21,15 +28,15 @@ class GPT(nn.Module):
 
 def scaled_dot_product_attention(query, key, value, mask=None):
     """
-    The inputs are all of shape batch_size, num_heads, sequence_length, dimensions_per_head
+    The inputs are all of shape batch_size, num_heads, sequence_length, dimensions_per_head (# B,H,S,C--this is dim per head)
 
     I think probably einsum isn't the fastest way to do this, but it's the easiest to understand
     """
     matmul_qk = torch.einsum(
-        "bhsi,bhsj->bhij", query, key
-    )  # result is batch_size, num_heads, dimensions_per_head, dimensions_per_head
+        "bhid,bhjd->bhij", query, key
+    )  # result is batch_size, num_heads, sequence_length, sequence_length
     d_k = query.shape[-1]
-    scaled_attention_logits = matmul_qk / np.sqrt(d_k)
+    scaled_attention_logits = matmul_qk / np.sqrt(d_k)  # B,H,S,S
 
     # add the mask here
     if mask is not None:
@@ -39,13 +46,17 @@ def scaled_dot_product_attention(query, key, value, mask=None):
     attention_weights = torch.nn.functional.softmax(
         scaled_attention_logits, dim=-1
     )  # batch_size, num_heads, dimensions_per_head, dimensions_per_head
-    matmul_qkv = torch.einsum("bhij,bhsj->bhsi", attention_weights, value)
+    matmul_qkv = torch.einsum("bhij,bhjd->bhid", attention_weights, value)  # B,H,S,C
     return matmul_qkv
 
 
 def create_mask(size):
-    mask = torch.tril(torch.ones(size, size))
-    return mask
+    """
+    This is a look-ahead mask (maybe change function name?), so normally it has ones below the diagonal and zeros above the diagonal
+    But in this case, we want ones above the diagonal so we can multiple them by float(-inf) and then softmax them
+    """
+    mask = 1 - torch.tril(torch.ones(size, size))
+    return mask.unsqueeze(0).unsqueeze(0)  # this is batch_size, 1, 1, sequence_length
 
 
 class MultiHeadAttention(nn.Module):
@@ -65,7 +76,9 @@ class MultiHeadAttention(nn.Module):
         self.num_heads = num_heads
         self.dimensions_per_head = int(input_dimensions / num_heads)  # this is also known as d_k
 
-        self.embeddings = nn.Embedding(vocab_size, input_dimensions)
+        self.embeddings = nn.Embedding(
+            vocab_size, input_dimensions
+        )  # karpathy has vocab_size, vocab_size -- double check at some point
 
         self.values = nn.Linear(
             self.input_dimensions, self.input_dimensions, bias=False
@@ -75,7 +88,7 @@ class MultiHeadAttention(nn.Module):
 
         # self.feed_forward = nn.Linear(self.input_dimensions, self.input_dimensions) # this can happen later
 
-    def forward(self, x):
+    def forward(self, x, mask=None):
         """
         The input here can be batch_size, sequence_length.
         I'll take that can put it through the embeddings and that will add the input dimensions
@@ -83,7 +96,7 @@ class MultiHeadAttention(nn.Module):
 
         The input to this model should be a tensor of shape (batch_size, sequence_length, input_dimensions)
         """
-        B, S = x.shape
+        batch_size, sequence_length = x.shape
         # start by embedding the input
         embedded_input = self.embeddings(x)  # output should be batch_size, sequence_length, input_dimensions (B,S,C)
 
@@ -93,12 +106,12 @@ class MultiHeadAttention(nn.Module):
         values = self.values(embedded_input)  # output should be batch_size, sequence_length, input_dimensions
 
         # reshape all the matrices to have an extra dimension for the heads
-        queries = queries.reshape(batch_size, num_heads, sequence_length, self.dimensions_per_head)
+        queries = queries.reshape(batch_size, num_heads, sequence_length, self.dimensions_per_head)  # B,H,S,C
         keys = keys.reshape(batch_size, num_heads, sequence_length, self.dimensions_per_head)
         values = values.reshape(batch_size, num_heads, sequence_length, self.dimensions_per_head)
 
         # now apply the attention
-        attention = scaled_dot_product_attention(queries, keys, values)
+        attention = scaled_dot_product_attention(queries, keys, values, mask=mask)
         # more steps to do here
 
         # add residual connection
@@ -115,5 +128,3 @@ class MultiHeadAttention(nn.Module):
 
         # layer norm
         # x = nn.LayerNorm(x)
-
-

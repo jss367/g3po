@@ -47,7 +47,7 @@ def get_shakespeare_data(sequence_length):
         add_special_tokens=True,
     )
 
-    vocab_size = len(tokenizer.get_vocab())
+    # vocab_size = len(tokenizer.get_vocab()) # 30522 for "bert-base-uncased"
 
     # encoded_text = tokenizer(
     #     text, padding="max_length", truncation=True, max_length=sequence_length, return_tensors="pt"

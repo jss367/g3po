@@ -1,5 +1,7 @@
 from transformers import BertTokenizerFast
-from .model import MultiHeadAttention
+
+from get_data import get_shakespeare_data
+from model import MultiHeadAttention, create_mask
 
 # ------------hyperparameters----------------
 batch_size = 32  # this is for getting started # note this is set in the other file too
@@ -9,22 +11,18 @@ num_heads = 8  # original paper used 8
 # ------------hyperparameters----------------
 
 
+data = get_shakespeare_data(sequence_length)
 
+batch_x, batch_y = data
+
+# the data comes out of here in tokenized form, still need to do the embedding
+# will do the embedding in the forward loop?
+vocab_size = 30522  # this is for "bert-base-uncased"
 
 mha = MultiHeadAttention(input_dimensions, num_heads, vocab_size)
-texts = ["this is my test text", "this is another test text"] * 200
 
-# let's get this going for one batch
-texts = texts[:batch_size]
+mask = create_mask(sequence_length)  # not convinced this is the right place to create the mask
 
+mha.forward(batch_x, mask=mask)
 
-
-# OK, now let's think about putting the encoded text into a model
-x = encoded_text.input_ids
-
-print(x.shape)  # this should be batch_size, sequence_length
-
-# Now I need to go through an embedding layer
-
-# but this is a list, not a tensor...
-mha.forward(x)
+# now let's get the loss
