@@ -1,6 +1,6 @@
 import torch
-from transformers import BertTokenizerFast
 from torch import nn
+
 from get_data import get_shakespeare_data
 from model import MultiHeadAttention, create_mask
 
@@ -11,6 +11,7 @@ sequence_length = 128
 num_heads = 8  # original paper used 8
 learning_rate = 3e-5
 num_iters = 20
+save_interval = 10
 # ------------hyperparameters----------------
 
 
@@ -53,3 +54,13 @@ for iter in range(num_iters):
 
     # print loss
     print(f"iter {iter} loss {loss}")
+
+    if iter % save_interval == 0:
+        save_dict = {
+            "model_state_dict": mha.state_dict(),
+            "optimizer_state_dict": optimizer.state_dict(),
+            "loss": loss,
+            "iter": iter,
+        }
+        torch.save(save_dict, f"checkpoints/model_checkpoint_{iter}.pth")
+        print("Model saved at iteration", iter)
