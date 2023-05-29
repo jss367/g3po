@@ -14,3 +14,7 @@ Automated training:
 Train it on math problems.
 
 
+Keep adding to it without losing the current knowledge. (Can you add structure without training it from scratch each time?)
+
+TODO:
+Stack multiple transformers
