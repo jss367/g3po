@@ -1,0 +1,16 @@
+
+batch_size = 32 # this is for getting started, might need to be changed later
+input_dimensions = 256
+
+# Sequence related parameters
+sequence_length = 128
+num_heads = 8
+
+# Learning rate
+learning_rate = 0.00003
+
+# Iteration and save parameters
+num_iters = 20
+save_interval = 10
+
+vocab_size = 30522  # this is for "bert-base-uncased"

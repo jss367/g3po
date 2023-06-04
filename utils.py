@@ -1,5 +1,13 @@
+import glob
+import os
+
+import toml
 import torch
 from torch.nn import functional as F
+
+
+hyperparameters = toml.load("Hyperparameters.toml")
+
 
 
 def top_p_sampling(logits: torch.Tensor, top_p=0.9, filter_value=-float("inf")):
@@ -19,3 +27,17 @@ def top_p_sampling(logits: torch.Tensor, top_p=0.9, filter_value=-float("inf")):
     indices_to_remove = sorted_indices[sorted_indices_to_remove]
     logits[0, indices_to_remove] = filter_value
     return logits
+
+
+def find_latest_checkpoint(dir_path):
+    """
+    I'm going to use ctime to determine which is the latest so I can mess around with file names
+    Note: ctime performs differently on Unix vs Windows, but I think this should be OK
+    - ctime is creation time on Windows, but change time on Unix
+    """
+    # Get list of all .pth files in the directory
+    list_of_files = glob.glob(os.path.join(dir_path, "*.pth"))
+    if not list_of_files:  # If no files found
+        return None
+    latest_file = max(list_of_files, key=os.path.getctime)
+    return latest_file

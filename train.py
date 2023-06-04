@@ -1,19 +1,19 @@
+import toml
 import torch
 from torch import nn
 
 from get_data import get_shakespeare_data
-from model import MultiHeadAttention, create_mask
+from model import MultiHeadAttention, create_mask, load_latest_model
 
-# ------------hyperparameters----------------
-batch_size = 32  # this is for getting started # note this is set in the other file too
-input_dimensions = 256
-sequence_length = 128
-num_heads = 8  # original paper used 8
-learning_rate = 3e-5
-num_iters = 20
-save_interval = 10
-# ------------hyperparameters----------------
+hyperparameters = toml.load("Hyperparameters.toml")
 
+batch_size = hyperparameters["batch_size"]
+input_dimensions = hyperparameters["input_dimensions"]
+learning_rate = hyperparameters["learning_rate"]
+num_heads = hyperparameters["num_heads"]
+num_iters = hyperparameters["num_iters"]
+save_interval = hyperparameters["save_interval"]
+sequence_length = hyperparameters["sequence_length"]
 
 data = get_shakespeare_data(sequence_length)
 
@@ -24,13 +24,16 @@ assert labels.shape == (batch_size, sequence_length)
 # will do the embedding in the forward loop?
 vocab_size = 30522  # this is for "bert-base-uncased"
 
+# check if model exists and if so, load it
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+dir_path = "./checkpoints"
+
+model, loaded_iter = load_latest_model(dir_path, device)
+
 mha = MultiHeadAttention(input_dimensions, num_heads, vocab_size)
 
 mask = create_mask(sequence_length)  # not convinced this is the right place to create the mask
-
-
-# now let's get the loss
-
 
 optimizer = torch.optim.AdamW(mha.parameters(), lr=learning_rate)
 
@@ -52,15 +55,17 @@ for iter in range(num_iters):
     # clear gradients
     optimizer.zero_grad()
 
-    # print loss
-    print(f"iter {iter} loss {loss}")
+    total_iter = iter + loaded_iter
 
-    if iter % save_interval == 0:
+    # print loss
+    print(f"iter this run {iter}, {total_iter=}, loss {loss}")
+
+    if (iter and iter % save_interval == 0) or iter == num_iters - 1:
         save_dict = {
             "model_state_dict": mha.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
             "loss": loss,
-            "iter": iter,
+            "iter": total_iter,
         }
-        torch.save(save_dict, f"checkpoints/model_checkpoint_{iter}.pth")
-        print("Model saved at iteration", iter)
+        torch.save(save_dict, f"checkpoints/model_checkpoint_{total_iter}.pth")
+        print("Model saved at iteration", total_iter)
