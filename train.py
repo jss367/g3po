@@ -3,11 +3,13 @@ import torch
 from torch import nn
 
 from data import get_shakespeare_data
+from evaluate import run_eval
 from model import MultiHeadAttention, create_mask, load_latest_model
 
 hyperparameters = toml.load("Hyperparameters.toml")
 
 batch_size = hyperparameters["batch_size"]
+eval_interval = hyperparameters["eval_interval"]
 input_dimensions = hyperparameters["input_dimensions"]
 learning_rate = hyperparameters["learning_rate"]
 num_heads = hyperparameters["num_heads"]
@@ -68,3 +70,6 @@ for iter in range(num_iters):
         }
         torch.save(save_dict, f"checkpoints/model_checkpoint_{total_iter}.pth")
         print("Model saved at iteration", total_iter)
+
+    if total_iter % eval_interval == 0:
+        run_eval(model, total_iter)

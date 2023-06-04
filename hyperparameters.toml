@@ -12,5 +12,6 @@ learning_rate = 0.00003
 # Iteration and save parameters
 num_iters = 20
 save_interval = 10
+eval_interval = 100
 
 vocab_size = 30522  # this is for "bert-base-uncased"

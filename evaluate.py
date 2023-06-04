@@ -3,9 +3,8 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from model import MultiHeadAttention
+
 from tokenizer import get_tokenizer
-from utils import load_latest_model
 
 hyperparameters = toml.load("Hyperparameters.toml")
 
@@ -21,30 +20,28 @@ vocab_size = hyperparameters["vocab_size"]
 num_tokens_to_generate = 10
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-dir_path = "./checkpoints"
+def run_eval(model, iteration):
+    model.eval()
 
-model, _, _ = load_latest_model(dir_path, device)
+    test_sentence = "I enjoy walking with my cute dog and"
 
-model.eval()
+    tokenizer = get_tokenizer()
 
-print(model)
+    # Encoding the test sentence
+    encoded_input = tokenizer.encode(test_sentence, add_special_tokens=False, return_tensors="pt")
 
-test_sentence = "I enjoy walking with my cute dog and"
+    # If your model is on GPU, remember to send your input to GPU
+    if torch.cuda.is_available():
+        encoded_input = encoded_input.to("cuda")
 
-tokenizer = get_tokenizer()
+    response = model.generate(encoded_input, num_tokens_to_generate)
 
-# Encoding the test sentence
-encoded_input = tokenizer.encode(test_sentence, add_special_tokens=False, return_tensors="pt")
+    decoded_sequence = tokenizer.decode(response[0])
 
-# If your model is on GPU, remember to send your input to GPU
-if torch.cuda.is_available():
-    encoded_input = encoded_input.to("cuda")
+    print(f"Input Sentence: {test_sentence}")
+    print(f"Decoded Sequence: {decoded_sequence}")
 
-response = model.generate(encoded_input, num_tokens_to_generate)
-
-decoded_sequence = tokenizer.decode(response[0])
-
-
-print(f"Input Sentence: {test_sentence}")
-print(f"Decoded Sequence: {decoded_sequence}")
+    # Now save the evaluation to a file
+    with open(f"evals/eval_at_iter_{iteration}.txt", "w") as f:
+        f.write(f"Input Sentence: {test_sentence}\n")
+        f.write(f"Decoded Sequence: {decoded_sequence}\n")
