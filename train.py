@@ -2,7 +2,7 @@ import toml
 import torch
 from torch import nn
 
-from get_data import get_shakespeare_data
+from data import get_shakespeare_data
 from model import MultiHeadAttention, create_mask, load_latest_model
 
 hyperparameters = toml.load("Hyperparameters.toml")
