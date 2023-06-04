@@ -6,10 +6,6 @@ import torch
 from torch.nn import functional as F
 
 
-hyperparameters = toml.load("Hyperparameters.toml")
-
-
-
 def top_p_sampling(logits: torch.Tensor, top_p=0.9, filter_value=-float("inf")):
     """Applies top-p sampling to logits"""
 

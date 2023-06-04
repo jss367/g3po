@@ -3,13 +3,13 @@
 import os
 
 import requests
+import toml
 import torch
 from transformers import BertTokenizerFast
 
-# OK, NOW I'M going to grab a lot of stuff from my notebook
-# hyperparameters
-batch_size = 32  # this is for getting started # note this is set in the other file too
-# hyperparameters
+hyperparameters = toml.load("Hyperparameters.toml")
+
+batch_size = hyperparameters["batch_size"]
 
 
 def load_or_download_data():
@@ -37,6 +37,7 @@ def get_shakespeare_data(sequence_length):
     """
     sequence_length is also called block size
 
+    This returns encoded data
     """
     text = load_or_download_data()
 

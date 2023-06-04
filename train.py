@@ -14,36 +14,35 @@ num_heads = hyperparameters["num_heads"]
 num_iters = hyperparameters["num_iters"]
 save_interval = hyperparameters["save_interval"]
 sequence_length = hyperparameters["sequence_length"]
+vocab_size = hyperparameters["vocab_size"]
 
-data = get_shakespeare_data(sequence_length)
-
-batch_x, batch_y = data
-labels = batch_y.long()
-assert labels.shape == (batch_size, sequence_length)
-# the data comes out of here in tokenized form, still need to do the embedding
-# will do the embedding in the forward loop?
-vocab_size = 30522  # this is for "bert-base-uncased"
-
-# check if model exists and if so, load it
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dir_path = "./checkpoints"
 
+# check if model exists and if so, load it
 model, optimizer, loaded_iter = load_latest_model(dir_path, device)
 
 if model is None:
     model = MultiHeadAttention(input_dimensions, num_heads, vocab_size)
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
-mask = create_mask(sequence_length)  # not convinced this is the right place to create the mask
-
+mask = create_mask(
+    sequence_length
+)  # not convinced this is the right place to create the mask; this only works if all sequences are the same length
 
 for iter in range(num_iters):
+    batch_x, batch_y = get_shakespeare_data(sequence_length)
+    labels = batch_y.long()
+
+    # Move the data to the device where the model is
+    batch_x = batch_x.to(device)
+    labels = labels.to(device)
+
     # forward pass
     outputs = model(batch_x, mask=mask)
 
     # compute loss
-    # loss = torch.nn.functional.cross_entropy(outputs, batch_y)
     loss_func = nn.CrossEntropyLoss()
     loss = loss_func(outputs.view(-1, vocab_size), labels.view(-1))
 
@@ -58,7 +57,7 @@ for iter in range(num_iters):
 
     total_iter = iter + loaded_iter
 
-    print(f"{iter=}, {total_iter=}, {loss=}")
+    print(f"{iter=}, {total_iter=}, loss: {loss}")
 
     if (iter and iter % save_interval == 0) or iter == num_iters - 1:
         save_dict = {
