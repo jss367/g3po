@@ -1,8 +1,9 @@
+import os
+
 import toml
 import torch
 from torch import nn
 from torch.nn import functional as F
-
 
 from tokenizer import get_tokenizer
 
@@ -18,6 +19,9 @@ sequence_length = hyperparameters["sequence_length"]
 vocab_size = hyperparameters["vocab_size"]
 
 num_tokens_to_generate = 10
+
+eval_dir_path = "./evals"
+os.makedirs(eval_dir_path) if not os.path.exists(eval_dir_path) else None
 
 
 def run_eval(model, iteration):

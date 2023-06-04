@@ -1,3 +1,5 @@
+import os
+
 import toml
 import torch
 from torch import nn
@@ -20,18 +22,22 @@ vocab_size = hyperparameters["vocab_size"]
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-dir_path = "./checkpoints"
+ckpt_dir = "./checkpoints"
+os.makedirs(ckpt_dir) if not os.path.exists(ckpt_dir) else None
+
 
 # check if model exists and if so, load it
-model, optimizer, loaded_iter = load_latest_model(dir_path, device)
+model, optimizer, loaded_iter = load_latest_model(ckpt_dir, device)
 
 if model is None:
     model = MultiHeadAttention(input_dimensions, num_heads, vocab_size)
+    model.to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
 mask = create_mask(
     sequence_length
 )  # not convinced this is the right place to create the mask; this only works if all sequences are the same length
+mask = mask.to(device)
 
 for iter in range(num_iters):
     batch_x, batch_y = get_shakespeare_data(sequence_length)

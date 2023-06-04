@@ -24,11 +24,11 @@ num_heads = hyperparameters["num_heads"]
 vocab_size = hyperparameters["vocab_size"]
 
 
-def load_latest_model(dir_path, device):
+def load_latest_model(dir_path: str, device: torch.device):
     checkpoint_path = find_latest_checkpoint(dir_path)
     if checkpoint_path is None:
         print("No checkpoint found")
-        return None, None, None
+        return None, None, 0
 
     print(f"Loading checkpoint from {checkpoint_path}")
     checkpoint = torch.load(checkpoint_path, map_location=device)
