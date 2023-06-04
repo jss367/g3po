@@ -29,17 +29,18 @@ vocab_size = 30522  # this is for "bert-base-uncased"
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dir_path = "./checkpoints"
 
-model, loaded_iter = load_latest_model(dir_path, device)
+model, optimizer, loaded_iter = load_latest_model(dir_path, device)
 
-mha = MultiHeadAttention(input_dimensions, num_heads, vocab_size)
+if model is None:
+    model = MultiHeadAttention(input_dimensions, num_heads, vocab_size)
+    optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
 
 mask = create_mask(sequence_length)  # not convinced this is the right place to create the mask
 
-optimizer = torch.optim.AdamW(mha.parameters(), lr=learning_rate)
 
 for iter in range(num_iters):
     # forward pass
-    outputs = mha(batch_x, mask=mask)
+    outputs = model(batch_x, mask=mask)
 
     # compute loss
     # loss = torch.nn.functional.cross_entropy(outputs, batch_y)
@@ -57,12 +58,11 @@ for iter in range(num_iters):
 
     total_iter = iter + loaded_iter
 
-    # print loss
-    print(f"iter this run {iter}, {total_iter=}, loss {loss}")
+    print(f"{iter=}, {total_iter=}, {loss=}")
 
     if (iter and iter % save_interval == 0) or iter == num_iters - 1:
         save_dict = {
-            "model_state_dict": mha.state_dict(),
+            "model_state_dict": model.state_dict(),
             "optimizer_state_dict": optimizer.state_dict(),
             "loss": loss,
             "iter": total_iter,

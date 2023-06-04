@@ -24,7 +24,7 @@ num_tokens_to_generate = 10
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 dir_path = "./checkpoints"
 
-model, _ = load_latest_model(dir_path, device)
+model, _, _ = load_latest_model(dir_path, device)
 
 model.eval()
 
