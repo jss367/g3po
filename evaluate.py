@@ -2,8 +2,6 @@ import os
 
 import toml
 import torch
-from torch import nn
-from torch.nn import functional as F
 
 from tokenizer import get_tokenizer
 
