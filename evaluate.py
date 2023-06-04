@@ -6,7 +6,7 @@ from torch.nn import functional as F
 
 from tokenizer import get_tokenizer
 
-hyperparameters = toml.load("Hyperparameters.toml")
+hyperparameters = toml.load("hyperparameters.toml")
 
 batch_size = hyperparameters["batch_size"]
 input_dimensions = hyperparameters["input_dimensions"]

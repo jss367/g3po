@@ -16,7 +16,7 @@ from torch.nn import functional as F
 
 from utils import find_latest_checkpoint, top_p_sampling
 
-hyperparameters = toml.load("Hyperparameters.toml")
+hyperparameters = toml.load("hyperparameters.toml")
 
 
 input_dimensions = hyperparameters["input_dimensions"]
@@ -28,13 +28,15 @@ def load_latest_model(dir_path, device):
     checkpoint_path = find_latest_checkpoint(dir_path)
     if checkpoint_path is None:
         print("No checkpoint found")
-        return None, None, None  # Also return None for optimizer and start_iter
+        return None, None, None
 
     print(f"Loading checkpoint from {checkpoint_path}")
     checkpoint = torch.load(checkpoint_path, map_location=device)
 
     model = MultiHeadAttention(input_dimensions, num_heads, vocab_size)
     model.load_state_dict(checkpoint["model_state_dict"])
+
+    model.to(device)
 
     # Initialize the optimizer and load its state
     optimizer = torch.optim.AdamW(model.parameters())

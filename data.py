@@ -7,7 +7,7 @@ import toml
 import torch
 from transformers import BertTokenizerFast
 
-hyperparameters = toml.load("Hyperparameters.toml")
+hyperparameters = toml.load("hyperparameters.toml")
 
 batch_size = hyperparameters["batch_size"]
 

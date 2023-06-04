@@ -6,7 +6,7 @@ from data import get_shakespeare_data
 from evaluate import run_eval
 from model import MultiHeadAttention, create_mask, load_latest_model
 
-hyperparameters = toml.load("Hyperparameters.toml")
+hyperparameters = toml.load("hyperparameters.toml")
 
 batch_size = hyperparameters["batch_size"]
 eval_interval = hyperparameters["eval_interval"]
