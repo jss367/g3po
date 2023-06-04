@@ -11,7 +11,11 @@ I was doing it all in a MultiHeadedAttention class, but I will make a single sel
 import numpy as np
 import torch
 from torch import nn
+from torch.nn import functional as F
 from transformers import BertTokenizerFast
+
+from tokenizer import get_tokenizer
+from utils import top_p_sampling
 
 # ------------hyperparameters---------------- some are in multiple files while I move things around
 batch_size = 32  # this is for getting started
@@ -86,7 +90,7 @@ class MultiHeadAttention(nn.Module):
         self.queries = nn.Linear(self.input_dimensions, self.input_dimensions, bias=False)
 
         self.feed_forward = nn.Linear(self.input_dimensions, self.input_dimensions)  # this can happen later
-        
+
         # Going to need a final linear layer right before softmax (see figure 1 of AIAYN)
         self.final_linear = nn.Linear(self.input_dimensions, self.vocab_size)
 
@@ -97,7 +101,7 @@ class MultiHeadAttention(nn.Module):
 
 
         The input to this model should be a tensor of shape (batch_size, sequence_length, input_dimensions)
-        
+
         """
         batch_size, sequence_length = x.shape
         # start by embedding the input
@@ -144,5 +148,32 @@ class MultiHeadAttention(nn.Module):
         outputs = self.feed_forward(outputs)  # B, S, input_dimensions
 
         outputs = self.final_linear(outputs)  # B, S, vocab_size
-        
+
         return outputs
+
+    def generate(self, start_sequence, num_tokens):
+        """
+        Does this need the starting sequence or something?
+
+        Start_sequence is an encoded sequence of tokens
+        """
+
+        sequence = start_sequence
+
+        for _ in range(num_tokens):
+            # Get model prediction
+            with torch.no_grad():  # We don't need gradients for inference, so this makes it more memory-efficient
+                logits = self(sequence)  # the output is of shape (batch_size, sequence_length, vocab_size)
+            # this means we have a word prediction for each word in the sequence. But we only want the last word
+
+            last_word_logits = logits[:, -1, :]  # shape (batch_size, vocab_size); this seems inefficient
+
+            filtered_logits = top_p_sampling(last_word_logits, top_p=0.9)
+            probabilities = F.softmax(filtered_logits, dim=-1)
+            next_token = torch.multinomial(probabilities, 1)
+
+            # now we can append the token to the sequence
+            # append to encoded_input somehow
+            sequence = torch.cat((sequence, next_token), dim=1)
+
+        return sequence
