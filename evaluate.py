@@ -22,12 +22,12 @@ eval_dir_path = "./evals"
 os.makedirs(eval_dir_path) if not os.path.exists(eval_dir_path) else None
 
 
-def run_eval(model, iteration):
+def run_eval(model, iteration, tokenizer_type="bert", **kwargs):
     model.eval()
 
-    test_sentence = "I enjoy walking with my cute dog and"
+    test_sentence = "\n"
 
-    tokenizer = get_tokenizer()
+    tokenizer = get_tokenizer(tokenizer_type)
 
     # Encoding the test sentence
     encoded_input = tokenizer.encode(test_sentence, add_special_tokens=False, return_tensors="pt")

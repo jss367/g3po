@@ -1,0 +1,8 @@
+# This is the config file for the simple train
+# It uses a tokenizer that's just the vocab of the shakespeare dataset
+checkpoint_dir = './checkpoints/mini'
+dataset = 'mini'
+tokenizer = 'mini'
+
+# At the moment they use the same hyperparameters, but this may change
+hyperparameters = 'hyperparameters.toml'

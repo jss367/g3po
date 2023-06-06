@@ -4,11 +4,13 @@ import toml
 import torch
 from torch import nn
 
-from data import get_shakespeare_data
+from data import get_data, get_shakespeare_data, get_shakespeare_data_small, get_vocab_size
 from evaluate import run_eval
 from model import MultiHeadAttention, create_mask, load_latest_model
 
-hyperparameters = toml.load("hyperparameters.toml")
+config = toml.load("configs/maxi.toml")
+
+hyperparameters = toml.load(config["hyperparameters"])
 
 batch_size = hyperparameters["batch_size"]
 eval_interval = hyperparameters["eval_interval"]
@@ -19,10 +21,10 @@ num_iters = hyperparameters["num_iters"]
 save_interval = hyperparameters["save_interval"]
 sequence_length = hyperparameters["sequence_length"]
 vocab_size = hyperparameters["vocab_size"]
-
+# vocab_size = get_vocab_size()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-ckpt_dir = "./checkpoints"
+ckpt_dir = config["checkpoint_dir"]
 os.makedirs(ckpt_dir) if not os.path.exists(ckpt_dir) else None
 
 
@@ -40,7 +42,7 @@ mask = create_mask(
 mask = mask.to(device)
 
 for iter in range(num_iters):
-    batch_x, batch_y = get_shakespeare_data(sequence_length)
+    batch_x, batch_y = get_data(config["dataset"], sequence_length)
     labels = batch_y.long()
 
     # Move the data to the device where the model is
@@ -76,6 +78,6 @@ for iter in range(num_iters):
         }
         torch.save(save_dict, f"checkpoints/model_checkpoint_{total_iter}.pth")
         print("Model saved at iteration", total_iter)
-
-    if total_iter % eval_interval == 0:
-        run_eval(model, total_iter)
+    run_eval(model, total_iter, tokenizer_type=config["tokenizer"])  # debug line
+    if total_iter and total_iter % eval_interval == 0:
+        run_eval(model, total_iter, tokenizer_type=config["tokenizer"])
