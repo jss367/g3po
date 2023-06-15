@@ -29,7 +29,10 @@ def get_bert_tokenizer():
 
 class MiniTokenizer:
     def __init__(self, text):
-        self.chars = tuple(set(text))
+        """
+        I'm going to sort the set so the tokenizer is deterministic and the tokens are in a nice order. Easier to debug.
+        """
+        self.chars = tuple(sorted(set(text)))
 
     def encode(self, sentence, add_special_tokens=False, return_tensors="pt"):
         # Here we're assuming `sentence` is a string of characters.
