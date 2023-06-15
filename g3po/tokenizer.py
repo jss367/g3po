@@ -6,7 +6,7 @@ Unclear if I should pass the text to the tokenizer upon initialization or not
 import torch
 from transformers import BertTokenizerFast
 
-from data import load_or_download_data
+from g3po.data import load_or_download_data
 
 
 def get_tokenizer(type="bert"):

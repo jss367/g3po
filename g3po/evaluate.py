@@ -3,7 +3,7 @@ import os
 import toml
 import torch
 
-from tokenizer import get_tokenizer
+from g3po.tokenizer import get_tokenizer
 
 hyperparameters = toml.load("hyperparameters.toml")
 

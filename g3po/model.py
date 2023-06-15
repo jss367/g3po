@@ -14,7 +14,7 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-from utils import find_latest_checkpoint, top_p_sampling
+from g3po.utils import find_latest_checkpoint, top_p_sampling
 
 hyperparameters = toml.load("hyperparameters.toml")
 

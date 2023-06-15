@@ -4,9 +4,9 @@ import toml
 import torch
 from torch import nn
 
-from data import get_data, get_shakespeare_data, get_shakespeare_data_small, get_vocab_size
-from evaluate import run_eval
-from model import MultiHeadAttention, create_mask, load_latest_model
+from g3po.data import get_data, get_shakespeare_data, get_shakespeare_data_small, get_vocab_size
+from g3po.evaluate import run_eval
+from g3po.model import MultiHeadAttention, create_mask, load_latest_model
 
 config = toml.load("configs/maxi.toml")
 

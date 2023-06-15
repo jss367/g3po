@@ -1,6 +1,6 @@
 import toml
 
-from data import get_shakespeare_data
+from g3po.data import get_shakespeare_data
 
 hyperparameters = toml.load("Hyperparameters.toml")
 
