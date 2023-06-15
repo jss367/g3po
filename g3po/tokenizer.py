@@ -3,6 +3,8 @@ I'm probably going to move this to be closer to the data so it's easier to use.
 
 Unclear if I should pass the text to the tokenizer upon initialization or not
 """
+from typing import Union
+
 import torch
 from transformers import BertTokenizerFast
 
@@ -43,8 +45,16 @@ class MiniTokenizer:
                 encoded = encoded.to("cuda")
         return encoded
 
-    def decode(self, encoded):
-        # Assuming `encoded` is a tensor of indices.
+    def decode(self, encoded: Union[list[int], torch.Tensor]) -> str:
+        """
+        Converts a list or tensor of character indices into a sentence.
+
+        Args:
+        encoded: The character indices to decode.
+
+        Returns:
+        str: The decoded sentence.
+        """
         if isinstance(encoded, torch.Tensor):
             encoded = encoded.cpu().tolist()  # If on GPU, move back to CPU and convert to list
         decoded = "".join(self.chars[idx] for idx in encoded)

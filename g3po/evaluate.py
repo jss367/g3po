@@ -1,3 +1,4 @@
+import logging
 import os
 
 import toml
@@ -19,31 +20,34 @@ vocab_size = hyperparameters["vocab_size"]
 num_tokens_to_generate = 10
 
 eval_dir_path = "./evals"
-os.makedirs(eval_dir_path) if not os.path.exists(eval_dir_path) else None
+os.makedirs(eval_dir_path, exist_ok=True)
+
+device = "cuda" if torch.cuda.is_available() else "cpu"
+
+logging.basicConfig(level=logging.INFO)
 
 
-def run_eval(model, iteration, tokenizer_type="bert", **kwargs):
+def run_eval(model, tokenizer_type="bert", **kwargs):
     model.eval()
 
     test_sentence = "\n"
-
     tokenizer = get_tokenizer(tokenizer_type)
 
     # Encoding the test sentence
-    encoded_input = tokenizer.encode(test_sentence, add_special_tokens=False, return_tensors="pt")
-
-    # If your model is on GPU, remember to send your input to GPU
-    if torch.cuda.is_available():
-        encoded_input = encoded_input.to("cuda")
-
-    response = model.generate(encoded_input, num_tokens_to_generate)
+    encoded_input = tokenizer.encode(test_sentence, add_special_tokens=False, return_tensors="pt").to(device)
+    encoded_batch = encoded_input.unsqueeze(1)
+    response = model.generate(encoded_batch, num_tokens_to_generate)
 
     decoded_sequence = tokenizer.decode(response[0])
 
-    print(f"Input Sentence: {test_sentence}")
-    print(f"Decoded Sequence: {decoded_sequence}")
+    logging.info(f"Input Sentence: {test_sentence}")
+    logging.info(f"Decoded Sequence: {decoded_sequence}")
 
-    # Now save the evaluation to a file
-    with open(f"evals/eval_at_iter_{iteration}.txt", "w") as f:
+    return test_sentence, decoded_sequence
+
+
+def save_eval(iteration, test_sentence, decoded_sequence):
+    # Save the evaluation to a file
+    with open(f"{eval_dir_path}/eval_at_iter_{iteration}.txt", "w") as f:
         f.write(f"Input Sentence: {test_sentence}\n")
         f.write(f"Decoded Sequence: {decoded_sequence}\n")

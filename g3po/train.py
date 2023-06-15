@@ -5,10 +5,10 @@ import torch
 from torch import nn
 
 from g3po.data import get_data, get_shakespeare_data, get_shakespeare_data_small, get_vocab_size
-from g3po.evaluate import run_eval
+from g3po.evaluate import run_eval, save_eval
 from g3po.model import MultiHeadAttention, create_mask, load_latest_model
 
-config = toml.load("configs/maxi.toml")
+config = toml.load("configs/mini.toml")
 
 hyperparameters = toml.load(config["hyperparameters"])
 
@@ -78,6 +78,8 @@ for iter in range(num_iters):
         }
         torch.save(save_dict, f"checkpoints/model_checkpoint_{total_iter}.pth")
         print("Model saved at iteration", total_iter)
-    run_eval(model, total_iter, tokenizer_type=config["tokenizer"])  # debug line
+    test_sentence, decoded_sequence = run_eval(model, tokenizer_type=config["tokenizer"])  # debug line
+    save_eval(total_iter, test_sentence, decoded_sequence)
     if total_iter and total_iter % eval_interval == 0:
-        run_eval(model, total_iter, tokenizer_type=config["tokenizer"])
+        test_sentence, decoded_sequence = run_eval(model, tokenizer_type=config["tokenizer"])
+        save_eval(total_iter, test_sentence, decoded_sequence)
