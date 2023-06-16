@@ -9,6 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 from g3po.data import get_data
 from g3po.evaluate import run_eval, save_eval
 from g3po.model import MultiHeadAttention, create_mask, load_latest_model
+from g3po.utils import tensor_to_text
 
 # Set logging level
 logging.basicConfig(level=logging.INFO)
@@ -16,6 +17,7 @@ logging.basicConfig(level=logging.INFO)
 config = toml.load("configs/mini.toml")
 
 hyperparameters = toml.load(config["hyperparameters"])
+hyperparameters["debug"] = True
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 ckpt_dir = config["checkpoint_dir"]
@@ -40,7 +42,7 @@ writer = SummaryWriter()
 loss_func = nn.CrossEntropyLoss()
 
 for iter_ in range(hyperparameters["num_iters"]):
-    batch_x, batch_y = get_data(config["dataset"], hyperparameters["sequence_length"])
+    (batch_x, batch_y), tokenizer = get_data(config["dataset"], hyperparameters["sequence_length"])
     labels = batch_y.long()
 
     # Move the data to the device where the model is
@@ -57,13 +59,13 @@ for iter_ in range(hyperparameters["num_iters"]):
     loss.backward()
     optimizer.step()
 
-    # Write loss to the TensorBoard
-    writer.add_scalar("Loss/train", loss.item(), iter_)
-
     # clear gradients
     optimizer.zero_grad()
 
-    total_iter_ = iter_ + loaded_iter
+    # Write loss to the TensorBoard
+    writer.add_scalar("Loss/train", loss.item(), iter_)
+
+    total_iter_ = iter_ + loaded_iter  # maybe a +1 somewhere
 
     logging.info(f"{iter_=}, {total_iter_=}, loss: {loss}")
 
@@ -80,6 +82,19 @@ for iter_ in range(hyperparameters["num_iters"]):
     if total_iter_ and total_iter_ % hyperparameters["eval_interval"] == 0:
         test_sentence, decoded_sequence = run_eval(model, tokenizer_type=config["tokenizer"])
         save_eval(total_iter_, test_sentence, decoded_sequence)
+
+    if hyperparameters.get("debug", False):
+        # Convert the batch tensor to text
+        batch_text = tensor_to_text(batch_x, tokenizer)
+        true_text = tensor_to_text(batch_y, tokenizer)
+        pred_text = tensor_to_text(outputs.argmax(dim=-1), tokenizer)
+
+        # Log the first few samples in the batch to TensorBoard
+        for i, text in enumerate(batch_text[:5]):
+            writer.add_text(f"Sample_{i}/Input", text, iter_)
+            writer.add_text(f"Sample_{i}/True", true_text[i], iter_)
+            writer.add_text(f"Sample_{i}/Prediction", pred_text[i], iter_)
+
 
 # Close the TensorBoard writer
 writer.close()

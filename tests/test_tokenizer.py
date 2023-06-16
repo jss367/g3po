@@ -1,6 +1,6 @@
 import torch
 
-from g3po.tokenizer import get_tokenizer
+from g3po.data import get_tokenizer
 
 
 def test_mini_tokenizer():
@@ -17,6 +17,6 @@ def test_mini_tokenizer2():
 
 
 def test_decode():
-    test_tokens = [0, 20, 15, 24, 18, 31, 10, 30]
+    test_tokens = [46, 43, 50, 50, 53, 1, 61, 53, 56, 50, 42]
     mini_tokenizer = get_tokenizer("mini")
-    mini_tokenizer.decode(test_tokens) == "\nhello world"
+    assert mini_tokenizer.decode(test_tokens) == "hello world"

@@ -5,6 +5,20 @@ import torch
 from torch.nn import functional as F
 
 
+def tensor_to_text(tensor, tokenizer):
+    """
+    This function takes a tensor representing a batch of sequences and a tokenizer,
+    and converts the tensor into human-readable text using the tokenizer.
+    """
+    # Convert the tensor to a list of sequences
+    sequences = tensor.tolist()
+
+    # Decode each sequence into text
+    text = [tokenizer.decode_sequence(seq) for seq in sequences]
+
+    return text
+
+
 def top_p_sampling(logits: torch.Tensor, top_p=0.9, filter_value=-float("inf")):
     """Applies top-p sampling to logits"""
 

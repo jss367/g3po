@@ -11,6 +11,6 @@ num_heads = 8
 learning_rate = 0.00003
 
 # Iteration and save parameters
-num_iters = 2000
-save_interval = 10
+num_iters = 100
+save_interval = 100
 eval_interval = 100

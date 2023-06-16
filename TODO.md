@@ -8,4 +8,8 @@ Think I'm going to do a get_vocab_size again
 
 Next Steps:
 
+FIX THE ISSUE WHERE THE LOSS IS HIGHER AFTER I LOAD IT
+
+Don't reload and re-split the data each step
+
 Be able to use both encoders. The full tokenizer makes it hard to see whether it's working or not
