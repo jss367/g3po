@@ -1,8 +1,10 @@
+import logging
 import os
 
 import toml
 import torch
 from torch import nn
+from torch.utils.tensorboard import SummaryWriter
 
 from g3po.data import get_data
 from g3po.evaluate import run_eval, save_eval
@@ -42,6 +44,9 @@ mask = create_mask(
 )  # not convinced this is the right place to create the mask; this only works if all sequences are the same length
 mask = mask.to(device)
 
+# Set up Tensorboard
+writer = SummaryWriter()
+
 for iter in range(num_iters):
     batch_x, batch_y = get_data(config["dataset"], sequence_length)
     labels = batch_y.long()
@@ -63,12 +68,15 @@ for iter in range(num_iters):
     # update parameters
     optimizer.step()
 
+    # Write loss to the TensorBoard
+    writer.add_scalar("Loss/train", loss.item(), iter)
+
     # clear gradients
     optimizer.zero_grad()
 
     total_iter = iter + loaded_iter
 
-    print(f"{iter=}, {total_iter=}, loss: {loss}")
+    logging.info(f"{iter=}, {total_iter=}, loss: {loss}")
 
     if (iter and iter % save_interval == 0) or iter == num_iters - 1:
         save_dict = {
@@ -77,8 +85,8 @@ for iter in range(num_iters):
             "loss": loss,
             "iter": total_iter,
         }
-        torch.save(save_dict, f"checkpoints/model_checkpoint_{total_iter}.pth")
-        print("Model saved at iteration", total_iter)
+        torch.save(save_dict, f"{ckpt_dir}/model_checkpoint_{total_iter}.pth")
+        logging.info("Model saved at iteration", total_iter)
 
     if total_iter and total_iter % eval_interval == 0:
         test_sentence, decoded_sequence = run_eval(model, tokenizer_type=config["tokenizer"])

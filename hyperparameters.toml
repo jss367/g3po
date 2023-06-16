@@ -14,4 +14,3 @@ learning_rate = 0.00003
 num_iters = 2000
 save_interval = 10
 eval_interval = 100
-
