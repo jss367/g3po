@@ -16,8 +16,6 @@ num_iters = hyperparameters["num_iters"]
 save_interval = hyperparameters["save_interval"]
 sequence_length = hyperparameters["sequence_length"]
 
-num_tokens_to_generate = 10
-
 eval_dir_path = "./evals"
 os.makedirs(eval_dir_path, exist_ok=True)
 
@@ -26,7 +24,7 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 logging.basicConfig(level=logging.INFO)
 
 
-def run_eval(model, tokenizer_type="bert", **kwargs):
+def run_eval(model, tokenizer_type="bert", num_tokens_to_generate=100, **kwargs):
     model.eval()
 
     test_sentence = "\n"

@@ -83,6 +83,8 @@ for iter_, (batch_x, batch_y) in enumerate(train_loader):
     if total_iter_ and total_iter_ % hyperparameters["eval_interval"] == 0:
         test_sentence, decoded_sequence = run_eval(model, tokenizer_type=config["tokenizer"])
         save_eval(total_iter_, test_sentence, decoded_sequence)
+        # Put the model back into training mode
+        model.train()
 
     # if hyperparameters.get("debug", False):
     #     # Convert the batch tensor to text
