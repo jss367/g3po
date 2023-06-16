@@ -6,6 +6,7 @@ from typing import Union
 import requests
 import toml
 import torch
+from torch.utils.data import DataLoader, Dataset
 from transformers import BertTokenizerFast
 
 # torch.manual_seed(42)
@@ -160,6 +161,54 @@ def get_data(type="shakespeare", sequence_length=128):
     return batch, tokenizer
 
 
+class TextDataset(Dataset):
+    def __init__(self, text, sequence_length):
+        self.text = text
+        self.sequence_length = sequence_length
+
+    def __len__(self):
+        return len(self.text) - self.sequence_length
+
+    def __getitem__(self, idx):
+        return (self.text[idx : idx + self.sequence_length], self.text[idx + 1 : idx + self.sequence_length + 1])
+
+
+def prepare_shakespeare_data(sequence_length):
+    # TODO
+    return None, None
+
+
+def prepare_shakespeare_data_small(sequence_length):
+    text = load_or_download_data()
+
+    chars = tuple(set(text))
+    tokenizer = CharTokenizer(chars)
+    tokens = torch.tensor([tokenizer.encode(c) for c in text])
+
+    split_index = int(len(tokens) * 0.9)
+    train_tokens = tokens[:split_index]
+    val_tokens = tokens[split_index:]
+
+    train_dataset = TextDataset(train_tokens, sequence_length)
+    val_dataset = TextDataset(val_tokens, sequence_length)
+
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=batch_size)
+
+    return train_loader, val_loader
+
+
+def prepare_data(type="shakespeare", sequence_length=128):
+    if type == "maxi":
+        train_loader, val_loader = prepare_shakespeare_data(sequence_length)
+    elif type == "mini":
+        train_loader, val_loader = prepare_shakespeare_data_small(sequence_length)
+    else:
+        raise ValueError(f"Unknown data type {type}")
+
+    return train_loader, val_loader
+
+
 def get_vocab_size():
     """
     This is specifically for the shakespeare dataset. Going to need to clean this up a bit.
@@ -178,14 +227,6 @@ def get_shakespeare_data_small(sequence_length):
 
     TODO: Remove all this stuff that shouldn't be called each step
     """
-    text = load_or_download_data()
-
-    chars = tuple(set(text))
-    tokenizer = CharTokenizer(chars)
-
-    split_index = int(len(text) * 0.9)
-    train_text = text[:split_index]
-    val_text = text[split_index:]
 
     first_block = torch.tensor([tokenizer.encode(c) for c in train_text[:sequence_length]])
     # convert all of train_text into a tensor

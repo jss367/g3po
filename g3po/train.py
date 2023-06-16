@@ -6,7 +6,7 @@ import torch
 from torch import nn
 from torch.utils.tensorboard import SummaryWriter
 
-from g3po.data import get_data
+from g3po.data import get_data, prepare_data
 from g3po.evaluate import run_eval, save_eval
 from g3po.model import MultiHeadAttention, create_mask, load_latest_model
 from g3po.utils import tensor_to_text
@@ -41,8 +41,9 @@ writer = SummaryWriter()
 # Define loss function outside the loop
 loss_func = nn.CrossEntropyLoss()
 
-for iter_ in range(hyperparameters["num_iters"]):
-    (batch_x, batch_y), tokenizer = get_data(config["dataset"], hyperparameters["sequence_length"])
+train_loader, _ = prepare_data(config["dataset"], hyperparameters["sequence_length"])
+
+for iter_, (batch_x, batch_y) in enumerate(train_loader):
     labels = batch_y.long()
 
     # Move the data to the device where the model is
@@ -83,17 +84,20 @@ for iter_ in range(hyperparameters["num_iters"]):
         test_sentence, decoded_sequence = run_eval(model, tokenizer_type=config["tokenizer"])
         save_eval(total_iter_, test_sentence, decoded_sequence)
 
-    if hyperparameters.get("debug", False):
-        # Convert the batch tensor to text
-        batch_text = tensor_to_text(batch_x, tokenizer)
-        true_text = tensor_to_text(batch_y, tokenizer)
-        pred_text = tensor_to_text(outputs.argmax(dim=-1), tokenizer)
+    # if hyperparameters.get("debug", False):
+    #     # Convert the batch tensor to text
+    #     batch_text = tensor_to_text(batch_x, tokenizer)
+    #     true_text = tensor_to_text(batch_y, tokenizer)
+    #     pred_text = tensor_to_text(outputs.argmax(dim=-1), tokenizer)
 
-        # Log the first few samples in the batch to TensorBoard
-        for i, text in enumerate(batch_text[:5]):
-            writer.add_text(f"Sample_{i}/Input", text, iter_)
-            writer.add_text(f"Sample_{i}/True", true_text[i], iter_)
-            writer.add_text(f"Sample_{i}/Prediction", pred_text[i], iter_)
+    #     # Log the first few samples in the batch to TensorBoard
+    #     for i, text in enumerate(batch_text[:5]):
+    #         writer.add_text(f"Sample_{i}/Input", text, iter_)
+    #         writer.add_text(f"Sample_{i}/True", true_text[i], iter_)
+    #         writer.add_text(f"Sample_{i}/Prediction", pred_text[i], iter_)
+
+    if iter_ == hyperparameters["num_iters"] - 1:
+        break
 
 
 # Close the TensorBoard writer
