@@ -18,9 +18,10 @@ from torch.nn import functional as F
 
 from g3po.utils import find_latest_checkpoint, top_p_sampling
 
+config = toml.load("configs/mini.toml")
+vocab_size = config["vocab_size"]
+
 hyperparameters = toml.load("hyperparameters.toml")
-
-
 input_dimensions = hyperparameters["input_dimensions"]
 num_heads = hyperparameters["num_heads"]
 
@@ -31,7 +32,7 @@ def load_latest_model(dir_path: str, device: torch.device):
         logging.info("No checkpoint found")
         return None, None, 0
 
-    print(f"Loading checkpoint from {checkpoint_path}")
+    logging.info(f"Loading checkpoint from {checkpoint_path}")
     checkpoint = torch.load(checkpoint_path, map_location=device)
 
     model = MultiHeadAttention(input_dimensions, num_heads, vocab_size)

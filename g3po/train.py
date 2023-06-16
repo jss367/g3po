@@ -10,6 +10,8 @@ from g3po.data import get_data
 from g3po.evaluate import run_eval, save_eval
 from g3po.model import MultiHeadAttention, create_mask, load_latest_model
 
+logging.basicConfig(level=logging.INFO)
+
 config = toml.load("configs/mini.toml")
 vocab_size = config["vocab_size"]  # this could be check config and if not calculate it
 
@@ -44,6 +46,8 @@ mask = create_mask(
 )  # not convinced this is the right place to create the mask; this only works if all sequences are the same length
 mask = mask.to(device)
 
+loss_func = nn.CrossEntropyLoss()
+
 # Set up Tensorboard
 writer = SummaryWriter()
 
@@ -59,7 +63,6 @@ for iter in range(num_iters):
     outputs = model(batch_x, mask=mask)
 
     # compute loss
-    loss_func = nn.CrossEntropyLoss()
     loss = loss_func(outputs.view(-1, vocab_size), labels.view(-1))
 
     # backward pass
@@ -86,8 +89,10 @@ for iter in range(num_iters):
             "iter": total_iter,
         }
         torch.save(save_dict, f"{ckpt_dir}/model_checkpoint_{total_iter}.pth")
-        logging.info("Model saved at iteration", total_iter)
+        logging.info("Model saved at iteration %s", total_iter)
 
     if total_iter and total_iter % eval_interval == 0:
         test_sentence, decoded_sequence = run_eval(model, tokenizer_type=config["tokenizer"])
         save_eval(total_iter, test_sentence, decoded_sequence)
+
+writer.close()
