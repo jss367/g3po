@@ -15,4 +15,3 @@ num_iters = 2000
 save_interval = 10
 eval_interval = 100
 
-vocab_size = 30522  # this is for "bert-base-uncased"

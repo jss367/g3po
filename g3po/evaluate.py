@@ -15,7 +15,6 @@ num_heads = hyperparameters["num_heads"]
 num_iters = hyperparameters["num_iters"]
 save_interval = hyperparameters["save_interval"]
 sequence_length = hyperparameters["sequence_length"]
-vocab_size = hyperparameters["vocab_size"]
 
 num_tokens_to_generate = 10
 

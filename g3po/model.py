@@ -16,12 +16,13 @@ from torch.nn import functional as F
 
 from g3po.utils import find_latest_checkpoint, top_p_sampling
 
+
 hyperparameters = toml.load("hyperparameters.toml")
 
 
 input_dimensions = hyperparameters["input_dimensions"]
 num_heads = hyperparameters["num_heads"]
-vocab_size = hyperparameters["vocab_size"]
+
 
 
 def load_latest_model(dir_path: str, device: torch.device):

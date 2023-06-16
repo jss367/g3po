@@ -4,11 +4,12 @@ import toml
 import torch
 from torch import nn
 
-from g3po.data import get_data, get_shakespeare_data, get_shakespeare_data_small, get_vocab_size
+from g3po.data import get_data
 from g3po.evaluate import run_eval, save_eval
 from g3po.model import MultiHeadAttention, create_mask, load_latest_model
 
 config = toml.load("configs/mini.toml")
+vocab_size = config["vocab_size"]  # this could be check config and if not calculate it
 
 hyperparameters = toml.load(config["hyperparameters"])
 
@@ -20,7 +21,7 @@ num_heads = hyperparameters["num_heads"]
 num_iters = hyperparameters["num_iters"]
 save_interval = hyperparameters["save_interval"]
 sequence_length = hyperparameters["sequence_length"]
-vocab_size = hyperparameters["vocab_size"]
+
 # vocab_size = get_vocab_size()
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -78,8 +79,7 @@ for iter in range(num_iters):
         }
         torch.save(save_dict, f"checkpoints/model_checkpoint_{total_iter}.pth")
         print("Model saved at iteration", total_iter)
-    test_sentence, decoded_sequence = run_eval(model, tokenizer_type=config["tokenizer"])  # debug line
-    save_eval(total_iter, test_sentence, decoded_sequence)
+
     if total_iter and total_iter % eval_interval == 0:
         test_sentence, decoded_sequence = run_eval(model, tokenizer_type=config["tokenizer"])
         save_eval(total_iter, test_sentence, decoded_sequence)
