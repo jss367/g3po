@@ -15,3 +15,5 @@ Don't reload and re-split the data each step
 Be able to use both encoders. The full tokenizer makes it hard to see whether it's working or not
 
 I'm currently doing it by number of iterations, but would be good to switch to epochs
+
+Add learning rate warm up
