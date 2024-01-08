@@ -19,3 +19,5 @@ I'm currently doing it by the number of iterations, but would be good to switch 
 Add learning rate warm-up
 
 Calc expected values: https://tomekkorbak.com/2022/10/10/compute-optimal-gpt2/
+
+Should be able to evaluate with just new line character
